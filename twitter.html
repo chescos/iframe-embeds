@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<title>Twitter Embed</title>
+<body>
+<div id="tweet"></div>
+
+<script>
+    const js = document.createElement('script');
+
+    js.src = 'https://platform.twitter.com/widgets.js';
+
+    document.body.appendChild(js);
+
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+
+    const id = params.id;
+
+    const tweetContainer = document.getElementById('tweet');
+
+    window.twttr = {
+        _e: [],
+        ready(func) {
+            this._e.push(func);
+        },
+    };
+
+    let lastHeight = null;
+
+    const postMessage = () => {
+        const height = tweetContainer.firstChild.offsetHeight + 20;
+
+        if (height !== lastHeight) {
+            lastHeight = height;
+
+            window.parent.postMessage({
+                event: 'HEIGHT_CHANGED',
+                provider: 'twitter',
+                id,
+                height,
+            }, '*');
+        }
+    };
+
+    window.twttr.ready((twitter) => {
+        twitter.widgets
+            .createTweet(id, tweetContainer, {
+                theme: 'dark',
+                align: 'center',
+                width: 550,
+                lang: 'en',
+                dnt: true,
+            })
+            .then(() => {
+                postMessage();
+
+                new ResizeObserver(postMessage).observe(tweetContainer)
+            });
+        },
+    );
+</script>
+</body>
+</html>
