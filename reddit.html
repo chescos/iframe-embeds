@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="UTF-8">
+<title>Reddit Embed</title>
+<body style="margin: 0; padding: 0;">
+<div id="submission"></div>
+
+<script>
+    const params = new Proxy(new URLSearchParams(window.location.search), {
+        get: (searchParams, prop) => searchParams.get(prop),
+    });
+
+    const id = params.id;
+
+    const submissionContainer = document.getElementById('submission');
+
+    const div = document.createElement('div');
+
+    div.setAttribute('class', 'reddit-embed-bq');
+    div.setAttribute('data-embed-theme', 'dark');
+
+    const link = document.createElement('a');
+
+    link.setAttribute('href', id);
+
+    div.appendChild(link);
+    submissionContainer.appendChild(div);
+
+    let lastHeight = null;
+
+    const postMessage = () => {
+        const height = submissionContainer.firstChild.offsetHeight;
+
+        if (height !== lastHeight) {
+            lastHeight = height;
+
+            window.parent.postMessage({
+                event: 'HEIGHT_CHANGED',
+                provider: 'reddit',
+                id,
+                height,
+            }, '*');
+        }
+    };
+
+    new ResizeObserver(postMessage).observe(submissionContainer)
+
+    const js = document.createElement('script');
+
+    js.src = 'https://embed.reddit.com/widgets.js';
+
+    document.body.appendChild(js);
+</script>
+
+</body>
+</html>
